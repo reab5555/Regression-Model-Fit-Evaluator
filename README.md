@@ -27,7 +27,7 @@ The Advanced Model Fit Evaluator is a powerful, user-friendly tool designed to a
    - Model Comparison Chart
    - Residuals Distribution Plot
    - Combined Scatter Plot of all variables
-   - Detailed text analysis of models and relationships
+   - Detailed analysis of models and relationships
 
 ## Installation
 
