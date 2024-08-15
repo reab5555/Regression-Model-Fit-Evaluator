@@ -18,6 +18,16 @@ The Advanced Model Fit Evaluator is a powerful, user-friendly tool designed to a
 - **Complexity Assessment**: Evaluates and reports on the complexity of relationships in the data.
 - **User-Friendly Interface**: Built with Gradio for an intuitive, web-based user experience.
 
+## List of Models:
+  - Linear Regression
+  - Polynomial Regression
+  - Generalized Linear Model
+  - Decision Tree Regressor
+  - K-Nearest Neighbors Regressor
+  - Support Vector Regression
+  - Random Forest Regressor
+  - Gradient Boosting Regressor
+    
 ## How to Use
 
 1. **Upload Data**: Start by uploading your CSV file containing the dataset.
