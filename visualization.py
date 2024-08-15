@@ -65,7 +65,7 @@ def plot_all_variables_scatter(data, independent_vars, dependent_var):
     plt.xlabel('Scaled Independent Variables')
     plt.ylabel(f'Scaled {dependent_var}')
     plt.title(f'All Variables vs {dependent_var} (Scaled)')
-    plt.legend()
+    plt.legend(loc='lower right')
     plt.tight_layout()
 
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
