@@ -1,4 +1,4 @@
-<img src="appendix/icon.webp" width="100" height="auto">
+<img src="icon.jpeg" width="100" height="auto">
 
 # Advanced Model Fit Evaluator
 
