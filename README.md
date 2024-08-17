@@ -1,6 +1,6 @@
 <img src="icon.jpeg" width="100" height="auto">
 
-# Advanced Model Fit Evaluator
+# Regression Model Fit Evaluator
 
 [App](https://huggingface.co/spaces/reab5555/Data-Distribution-Fit)
 
