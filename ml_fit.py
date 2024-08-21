@@ -39,14 +39,14 @@ def find_best_ml_model(X, y):
         param_grids['Polynomial (degree 3)'] = {}
 
     best_model_info = {}
+    best_model_object = None
+    best_r2 = -float('inf')
+    overall_best_residuals = None
 
     # Scaling data
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-
     X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
-
-    residuals = None  # Store residuals for the best model
 
     for name, model in models.items():
         try:
@@ -54,23 +54,34 @@ def find_best_ml_model(X, y):
                 # Special handling for GLM to avoid invalid y values
                 y_min, y_max = np.min(y), np.max(y)
                 if y_min <= 0:
-                    y_train = y_train - y_min + 1e-4  # Ensure all y values are positive
-                    y_test = y_test - y_min + 1e-4
+                    y_train_adjusted = y_train - y_min + 1e-4  # Ensure all y values are positive
+                    y_test_adjusted = y_test - y_min + 1e-4
+                else:
+                    y_train_adjusted, y_test_adjusted = y_train, y_test
 
-            grid_search = GridSearchCV(model, param_grids[name], cv=6, scoring='r2', n_jobs=-1)
-            grid_search.fit(X_train, y_train)
+                grid_search = GridSearchCV(model, param_grids[name], cv=6, scoring='r2', n_jobs=-1)
+                grid_search.fit(X_train, y_train_adjusted)
+            else:
+                grid_search = GridSearchCV(model, param_grids[name], cv=6, scoring='r2', n_jobs=-1)
+                grid_search.fit(X_train, y_train)
+
             best_model = grid_search.best_estimator_
             y_pred = best_model.predict(X_test)
             mse = mean_squared_error(y_test, y_pred)
             r2 = r2_score(y_test, y_pred)
+
             best_model_info[name] = {
                 'Best Parameters': grid_search.best_params_,
                 'MSE': round(mse, 4),
-                'R2': round(r2, 4)
+                'R2': round(r2, 4),
+                'model': best_model
             }
 
-            if name == sorted(best_model_info.items(), key=lambda item: item[1]['R2'], reverse=True)[0][0]:
-                residuals = y_test - y_pred  # Store residuals of the best model
+            if r2 > best_r2:
+                best_r2 = r2
+                best_model_object = best_model
+                overall_best_residuals = y_test - y_pred
+
         except Exception as e:
             print(f"Skipping model {name} due to error: {str(e)}")
 
@@ -81,4 +92,4 @@ def find_best_ml_model(X, y):
     max_r2 = sorted_models[0][1]['R2'] if sorted_models else 0
     complexity_level = int((1 - max_r2) * 10)
 
-    return sorted_models, complexity_level, residuals
+    return sorted_models, complexity_level, overall_best_residuals, best_model_object
