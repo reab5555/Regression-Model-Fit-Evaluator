@@ -21,6 +21,7 @@ The Advanced Model Fit Evaluator is a powerful, user-friendly tool designed to a
 
 ## List of Models:
   - Linear Regression
+  - Exponential Regression
   - Polynomial Regression
   - Generalized Linear Model
   - Decision Tree Regressor
