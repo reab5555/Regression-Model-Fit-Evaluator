@@ -29,7 +29,7 @@ def find_best_ml_model(X, y, cv_folds=6):
         'Linear Regression': {},
     
         'GLM': {
-            'power': [0, 1, 2],
+            'power': [0, 1, 2, 3],
             'alpha': [0.01, 0.1, 1],
             'link': ['auto']
         },
