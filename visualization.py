@@ -74,16 +74,18 @@ def plot_feature_importance(X, y, best_model, model_name, best_params):
     if hasattr(best_model, 'coef_'):
         # For models with coefficients (e.g., Linear Regression, Lasso, Ridge)
         importance_values = best_model.coef_
-        sorted_idx = np.argsort(np.abs(importance_values))[::1]
-        sorted_features = X.columns[sorted_idx]
-        sorted_importance = importance_values[sorted_idx]
+        if importance_values.ndim == 1:
+            importance_values = importance_values.reshape(1, -1)
+        sorted_idx = np.argsort(np.abs(importance_values).flatten())[::-1]
+        sorted_features = [X.columns[i] for i in sorted_idx]
+        sorted_importance = importance_values.flatten()[sorted_idx]
         title_suffix = ""
     else:
         # Use permutation importance for other models, including SVR
         perm_importance = permutation_importance(best_model, X, y, n_repeats=35, random_state=42)
         importance_values = perm_importance.importances_mean
-        sorted_idx = np.argsort(importance_values)[::1]
-        sorted_features = X.columns[sorted_idx]
+        sorted_idx = np.argsort(importance_values)[::-1]
+        sorted_features = [X.columns[i] for i in sorted_idx]
         sorted_importance = importance_values[sorted_idx]
         title_suffix = f" (Kernel: {best_params.get('kernel', 'N/A')})" if model_name == "Support Vector Machine" else ""
 
@@ -97,10 +99,10 @@ def plot_feature_importance(X, y, best_model, model_name, best_params):
     for i, bar in enumerate(bars):
         width = bar.get_width()
         if width < 0:
-            plt.text(width, bar.get_y() + bar.get_height()/2, f"{width:.2f}", 
+            plt.text(width, bar.get_y() + bar.get_height()/2, f"{width:.3f}", 
                      ha='right', va='center', color='black')
         else:
-            plt.text(width, bar.get_y() + bar.get_height()/2, f"{width:.2f}", 
+            plt.text(width, bar.get_y() + bar.get_height()/2, f"{width:.3f}", 
                      ha='left', va='center', color='black')
 
     plt.axvline(x=0, color='k', linestyle='--')

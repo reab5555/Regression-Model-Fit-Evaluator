@@ -7,10 +7,12 @@ from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.pipeline import make_pipeline
 from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score, cross_val_predict
 from sklearn.metrics import mean_squared_error, r2_score
-import numpy as np
 from sklearn.feature_selection import RFE
+from sklearn.impute import SimpleImputer
+import numpy as np
 
 def find_best_ml_model(X, y, cv_folds=6):
+
     models = {
         'Linear Regression': LinearRegression(),
         'GLM': TweedieRegressor(power=0),
@@ -18,7 +20,7 @@ def find_best_ml_model(X, y, cv_folds=6):
         'K-Nearest Neighbors': KNeighborsRegressor(),
         'Support Vector Machine': SVR(),
         'Random Forest': RandomForestRegressor(),
-        'Gradient Boosting': GradientBoostingRegressor(),
+        'Gradient Boosting': GradientBoostingRegressor()
     }
 
     if X.shape[1] == 1:
@@ -27,33 +29,26 @@ def find_best_ml_model(X, y, cv_folds=6):
 
     param_grids = {
         'Linear Regression': {},
-    
         'GLM': {
             'power': [0, 1, 2, 3],
-            'alpha': [0.01, 0.1, 1],
             'link': ['auto']
         },
-    
         'Decision Tree': {
             'max_depth': [None, 5, 10, 20],
             'min_samples_split': [2, 5, 10, 15],
             'min_samples_leaf': [1, 2, 4, 5],
             'max_features': ['sqrt', 'log2', None]
         },
-    
         'K-Nearest Neighbors': {
             'n_neighbors': [3, 5, 10, 15], 
             'weights': ['uniform', 'distance'],
             'algorithm': ['auto'],
             'leaf_size': [15, 30, 50] 
         },
-    
         'Support Vector Machine': {
-            'C': [0.1, 1, 10],
             'kernel': ['linear', 'rbf', 'poly', 'sigmoid'],
-            'gamma': ['auto']
+            'gamma': ['scale', 'auto']
         },
-    
         'Random Forest': {
             'n_estimators': [50, 100, 125],
             'max_depth': [None, 5, 10, 20],
@@ -61,7 +56,6 @@ def find_best_ml_model(X, y, cv_folds=6):
             'min_samples_leaf': [1, 2, 4, 5],
             'bootstrap': [True, False]
         },
-    
         'Gradient Boosting': {
             'n_estimators': [50, 100, 150],
             'learning_rate': [0.1, 0.01, 0.001],
@@ -75,7 +69,7 @@ def find_best_ml_model(X, y, cv_folds=6):
     if X.shape[1] == 1:
         param_grids['Polynomial (degree 2)'] = {}
         param_grids['Polynomial (degree 3)'] = {}
-
+        
     best_model_info = {}
     best_model_object = None
     best_r2 = -float('inf')

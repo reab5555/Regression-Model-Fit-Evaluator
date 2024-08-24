@@ -75,7 +75,7 @@ with gr.Blocks() as demo:
 
     file_input.upload(load_file, inputs=file_input, outputs=[target_selector, independent_selector, df_state])
     analyze_button.click(analyze_columns,
-                         inputs=[target_selector, independent_selector, df_state],
+                         inputs=[target_selector, independent_selector, df_state, cv_selector],
                          outputs=[model_plot_output, residual_plot_output, all_vars_scatter_output, feature_importance_output, output_text])
 
 if __name__ == "__main__":
