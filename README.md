@@ -10,11 +10,11 @@ The Advanced Model Fit Evaluator is a powerful, user-friendly tool designed to a
 
 - **Multiple Regression Models**: Evaluates and compares various regression models including Linear Regression, Polynomial Regression, Decision Trees, Random Forests, and more.
 - **Model Comparison**: Visualizes the performance of top models using R-squared values.
+- **Data Scaling**: Implements feature scaling for better comparison and visualization.
+- **Cross Validation** Built in cross-validation with k number of folds that can be set.
 - **Features Importance**: Use permutations method to asses or rank features importance.
 - **Residual Analysis**: Provides a detailed analysis of residuals, including distribution and normality tests.
 - **Variable Relationship Visualization**: Creates scatter plots to show relationships between independent variables and the target variable.
-- **Data Scaling**: Implements feature scaling for better comparison and visualization.
-- **Cross Validation** Built in cross-validation with k number of folds that can be set.
 - **Complexity Assessment**: Evaluates and reports on the complexity of relationships in the data.
 - **User-Friendly Interface**: Built with Gradio for an intuitive, web-based user experience.
 
