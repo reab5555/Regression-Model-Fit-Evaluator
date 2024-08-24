@@ -9,7 +9,7 @@ def load_file(file):
     numeric_columns = df.select_dtypes(include=[float, int]).columns.tolist()
     return gr.update(choices=numeric_columns), gr.update(choices=numeric_columns), df
     
-def analyze_columns(target_var, independent_vars, df):
+def analyze_columns(target_var, independent_vars, df, cv_folds):
     if not target_var or not independent_vars:
         return None, None, None, None, "Please select a target variable and at least one independent variable."
 
@@ -18,12 +18,15 @@ def analyze_columns(target_var, independent_vars, df):
     X = selected_data[independent_vars]
     y = selected_data[target_var]
 
-    sorted_models, complexity_level, residuals, best_model_object = find_best_ml_model(X.values, y.values)
+    sorted_models, complexity_level, residuals, best_model_object = find_best_ml_model(X.values, y.values, cv_folds=cv_folds)
     model_plot = plot_model_bars(sorted_models)
     best_model_name = sorted_models[0][0]
-    residual_plot, residual_p_value = check_residual_distribution(residuals, best_model_name, test_size=0.2)
+    best_model_info = sorted_models[0][1]
+    best_model_object = best_model_info['model']
+    best_model_params = best_model_info['Best Parameters']
+    residual_plot, residual_p_value = check_residual_distribution(residuals, best_model_name)
     all_vars_scatter = plot_all_variables_scatter(selected_data, independent_vars, target_var)
-    feature_importance_plot = plot_feature_importance(X, y, best_model_object, best_model_name)
+    feature_importance_plot = plot_feature_importance(X, y, best_model_object, best_model_name, best_model_params)
 
     result_text = f"# Analysis Results\n\n"
     result_text += f"## Data Overview\n"
@@ -36,8 +39,8 @@ def analyze_columns(target_var, independent_vars, df):
     result_text += f"## Top 10 Models\n"
     for i, (name, info) in enumerate(sorted_models[:10], 1):
         result_text += f"{i}. **{name}**\n"
-        result_text += f"   - R²: {info['R2']:.3f}\n"
-        result_text += f"   - MSE: {info['MSE']:.3f}\n"
+        result_text += f"   - R² (CV mean): {info['R2']:.3f}\n"
+        result_text += f"   - RMSE: {info['RMSE']:.3f}\n"
         if info['Best Parameters']:
             result_text += f"   - Best Parameters: {info['Best Parameters']}\n"
         result_text += "\n"
@@ -58,6 +61,7 @@ with gr.Blocks() as demo:
     with gr.Row():
         target_selector = gr.Dropdown(label="Select Target (Dependent) Variable", choices=[])
         independent_selector = gr.Dropdown(label="Select Independent Variables", choices=[], multiselect=True)
+        cv_selector = gr.Dropdown(label="Cross-validation K-Folds", choices=list(range(3, 11)), value=6)
     analyze_button = gr.Button("Analyze")
     with gr.Row():
         model_plot_output = gr.Image(label="Model Comparison")

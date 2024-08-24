@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+from matplotlib import cm
 import seaborn as sns
 import numpy as np
 import pandas as pd
@@ -8,6 +9,8 @@ import tempfile
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.inspection import permutation_importance
+from sklearn.feature_selection import RFE
+from sklearn.svm import SVR
 
 def plot_model_bars(sorted_models):
     top_models = sorted_models[:5]
@@ -28,7 +31,7 @@ def plot_model_bars(sorted_models):
     plt.close()
     return temp_file.name
 
-def check_residual_distribution(residuals, best_model_name, test_size=0.2):
+def check_residual_distribution(residuals, best_model_name):
     plt.figure(figsize=(12, 8), dpi=400)
     sns.histplot(residuals, kde=True, stat="density", bins=50, color='black', label='Residual Distribution')
     mean, std = norm.fit(residuals)
@@ -37,7 +40,7 @@ def check_residual_distribution(residuals, best_model_name, test_size=0.2):
     p_value = kstest(residuals, 'norm', args=(mean, std)).pvalue
     p_value_text = "<0.001" if p_value < 0.001 else f"{p_value:.3f}"
     plt.plot(normal_best_fit_data, normal_pdf, color='red', lw=2, label=f'Normal Fit (p-value={p_value_text})')
-    plt.title(f"Residuals Comparison with Normal Distribution\n(Best Model: {best_model_name}, Test Split: {test_size*100}%)")
+    plt.title(f"Residuals Comparison with Normal Distribution\n(Best Model: {best_model_name})")
     plt.legend()
     temp_file_residuals = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
     plt.savefig(temp_file_residuals.name)
@@ -64,21 +67,46 @@ def plot_all_variables_scatter(data, independent_vars, dependent_var):
     plt.close()
     return temp_file.name
 
-def plot_feature_importance(X, y, best_model, model_name):
-    perm_importance = permutation_importance(best_model, X, y, n_repeats=15, random_state=42)
-    importance_values = np.abs(perm_importance.importances_mean)
-    sorted_idx = importance_values.argsort()[::-1]
-    sorted_features = X.columns[sorted_idx]
-    sorted_importance = importance_values[sorted_idx]
+
+def plot_feature_importance(X, y, best_model, model_name, best_params):
     plt.figure(figsize=(12, 8), dpi=400)
-    sns.barplot(x=sorted_importance, y=sorted_features, palette="viridis")
-    plt.title(f"Feature Importance ({model_name})")
-    plt.xlabel("Importance")
+    
+    if hasattr(best_model, 'coef_'):
+        # For models with coefficients (e.g., Linear Regression, Lasso, Ridge)
+        importance_values = best_model.coef_
+        sorted_idx = np.argsort(np.abs(importance_values))[::1]
+        sorted_features = X.columns[sorted_idx]
+        sorted_importance = importance_values[sorted_idx]
+        title_suffix = ""
+    else:
+        # Use permutation importance for other models, including SVR
+        perm_importance = permutation_importance(best_model, X, y, n_repeats=35, random_state=42)
+        importance_values = perm_importance.importances_mean
+        sorted_idx = np.argsort(importance_values)[::1]
+        sorted_features = X.columns[sorted_idx]
+        sorted_importance = importance_values[sorted_idx]
+        title_suffix = f" (Kernel: {best_params.get('kernel', 'N/A')})" if model_name == "Support Vector Machine" else ""
+
+    colors = plt.cm.RdYlGn(np.linspace(0.2, 0.8, len(sorted_importance)))
+    bars = plt.barh(range(len(sorted_importance)), sorted_importance, color=colors, align='center')
+    plt.yticks(range(len(sorted_importance)), sorted_features)
+    plt.xlabel("Coefficient/Importance")
+    plt.title(f"Feature Importance/Coefficients ({model_name}){title_suffix}")
+
+    # Annotate each bar with the importance value
+    for i, bar in enumerate(bars):
+        width = bar.get_width()
+        if width < 0:
+            plt.text(width, bar.get_y() + bar.get_height()/2, f"{width:.2f}", 
+                     ha='right', va='center', color='black')
+        else:
+            plt.text(width, bar.get_y() + bar.get_height()/2, f"{width:.2f}", 
+                     ha='left', va='center', color='black')
+
+    plt.axvline(x=0, color='k', linestyle='--')
     plt.ylabel("Features")
     plt.tight_layout()
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
     plt.savefig(temp_file.name)
     plt.close()
     return temp_file.name
-
-    

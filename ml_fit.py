@@ -5,11 +5,12 @@ from sklearn.svm import SVR
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.pipeline import make_pipeline
-from sklearn.model_selection import train_test_split, GridSearchCV
+from sklearn.model_selection import train_test_split, GridSearchCV, cross_val_score, cross_val_predict
 from sklearn.metrics import mean_squared_error, r2_score
 import numpy as np
+from sklearn.feature_selection import RFE
 
-def find_best_ml_model(X, y):
+def find_best_ml_model(X, y, cv_folds=6):
     models = {
         'Linear Regression': LinearRegression(),
         'GLM': TweedieRegressor(power=0),
@@ -26,13 +27,50 @@ def find_best_ml_model(X, y):
 
     param_grids = {
         'Linear Regression': {},
-        'GLM': {'power': [0, 1, 2], 'alpha': [0.01, 0.1, 1]},
-        'Decision Tree': {'max_depth': [None, 10, 20], 'min_samples_split': [2, 10]},
-        'K-Nearest Neighbors': {'n_neighbors': [3, 5, 10], 'weights': ['uniform', 'distance']},
-        'Support Vector Machine': {'C': [1, 10], 'kernel': ['linear', 'rbf']},
-        'Random Forest': {'n_estimators': [50, 100], 'max_depth': [None, 10]},
-        'Gradient Boosting': {'n_estimators': [100, 200], 'learning_rate': [0.1, 0.01]},
+    
+        'GLM': {
+            'power': [0, 1, 2],
+            'alpha': [0.01, 0.1, 1],
+            'link': ['auto']
+        },
+    
+        'Decision Tree': {
+            'max_depth': [None, 5, 10, 20],
+            'min_samples_split': [2, 5, 10, 15],
+            'min_samples_leaf': [1, 2, 4, 5],
+            'max_features': ['sqrt', 'log2', None]
+        },
+    
+        'K-Nearest Neighbors': {
+            'n_neighbors': [3, 5, 10, 15], 
+            'weights': ['uniform', 'distance'],
+            'algorithm': ['auto'],
+            'leaf_size': [15, 30, 50] 
+        },
+    
+        'Support Vector Machine': {
+            'C': [0.1, 1, 10],
+            'kernel': ['linear', 'rbf', 'poly', 'sigmoid'],
+            'gamma': ['auto']
+        },
+    
+        'Random Forest': {
+            'n_estimators': [50, 100, 125],
+            'max_depth': [None, 5, 10, 20],
+            'min_samples_split': [2, 5, 10, 15],
+            'min_samples_leaf': [1, 2, 4, 5],
+            'bootstrap': [True, False]
+        },
+    
+        'Gradient Boosting': {
+            'n_estimators': [50, 100, 150],
+            'learning_rate': [0.1, 0.01, 0.001],
+            'max_depth': [3, 5, 7, 10],
+            'subsample': [0.8, 1.0],  
+            'max_features': ['sqrt', 'log2', None] 
+        }
     }
+
 
     if X.shape[1] == 1:
         param_grids['Polynomial (degree 2)'] = {}
@@ -46,7 +84,6 @@ def find_best_ml_model(X, y):
     # Scaling data
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2, random_state=42)
 
     for name, model in models.items():
         try:
@@ -54,33 +91,36 @@ def find_best_ml_model(X, y):
                 # Special handling for GLM to avoid invalid y values
                 y_min, y_max = np.min(y), np.max(y)
                 if y_min <= 0:
-                    y_train_adjusted = y_train - y_min + 1e-4  # Ensure all y values are positive
-                    y_test_adjusted = y_test - y_min + 1e-4
+                    y_adjusted = y - y_min + 1e-4  # Ensure all y values are positive
                 else:
-                    y_train_adjusted, y_test_adjusted = y_train, y_test
+                    y_adjusted = y
 
-                grid_search = GridSearchCV(model, param_grids[name], cv=6, scoring='r2', n_jobs=-1)
-                grid_search.fit(X_train, y_train_adjusted)
+                grid_search = GridSearchCV(model, param_grids[name], cv=cv_folds, scoring='r2', n_jobs=-1)
+                grid_search.fit(X_scaled, y_adjusted)
             else:
-                grid_search = GridSearchCV(model, param_grids[name], cv=6, scoring='r2', n_jobs=-1)
-                grid_search.fit(X_train, y_train)
+                grid_search = GridSearchCV(model, param_grids[name], cv=cv_folds, scoring='r2', n_jobs=-1)
+                grid_search.fit(X_scaled, y)
 
             best_model = grid_search.best_estimator_
-            y_pred = best_model.predict(X_test)
-            mse = mean_squared_error(y_test, y_pred)
-            r2 = r2_score(y_test, y_pred)
+            
+            # Perform 7-fold cross-validation predictions
+            cross_val_preds = cross_val_predict(best_model, X_scaled, y, cv=cv_folds)
+            
+            rmse = np.sqrt(mean_squared_error(y, cross_val_preds))
+            r2 = np.mean(cross_val_score(best_model, X_scaled, y, cv=cv_folds, scoring='r2'))  # Use mean of cross-validation R2 scores
 
             best_model_info[name] = {
                 'Best Parameters': grid_search.best_params_,
-                'MSE': round(mse, 4),
+                'RMSE': round(rmse, 4),
                 'R2': round(r2, 4),
-                'model': best_model
+                'model': best_model,
+                'Cross-Val Predictions': cross_val_preds
             }
 
             if r2 > best_r2:
                 best_r2 = r2
                 best_model_object = best_model
-                overall_best_residuals = y_test - y_pred
+                overall_best_residuals = y - cross_val_preds
 
         except Exception as e:
             print(f"Skipping model {name} due to error: {str(e)}")
