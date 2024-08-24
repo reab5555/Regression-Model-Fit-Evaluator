@@ -8,7 +8,7 @@ The Advanced Model Fit Evaluator is a powerful, user-friendly tool designed to a
 
 ## Features
 
-- **Multiple Regression Models**: Evaluates and compares various regression models including Linear Regression, Polynomial Regression, Decision Trees, Random Forests, and more.
+- **Multiple Regression Models**: Evaluates and compares various regression models from simplier model to more complex.
 - **Model Comparison**: Visualizes the performance of top models using R-squared values, with absence of any regularization technics in order to determine the best fit.
 - **Grid Search**: Utilizing grid-search for finding the best hyperparameters.
 - **Data Scaling**: Implements feature scaling for better comparison and visualization.
