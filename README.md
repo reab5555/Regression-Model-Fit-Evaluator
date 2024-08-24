@@ -16,6 +16,7 @@ The Advanced Model Fit Evaluator is a powerful, user-friendly tool designed to a
 - **Residual Analysis**: Provides a detailed analysis of residuals, including distribution and normality tests.
 - **Variable Relationship Visualization**: Creates scatter plots to show relationships between independent variables and the target variable.
 - **Data Scaling**: Implements feature scaling for better comparison and visualization.
+- **Cross Validation** Built in cross-validation with k number of folds that can be set.
 - **Complexity Assessment**: Evaluates and reports on the complexity of relationships in the data.
 - **User-Friendly Interface**: Built with Gradio for an intuitive, web-based user experience.
 
@@ -40,9 +41,3 @@ The Advanced Model Fit Evaluator is a powerful, user-friendly tool designed to a
    - Combined Scatter Plot of all variables
    - Detailed analysis of models and relationships
 
-## Installation
-
-```bash
-git clone https://github.com/reab5555/advanced-model-fit-evaluator.git
-cd advanced-model-fit-evaluator
-pip install -r requirements.txt
