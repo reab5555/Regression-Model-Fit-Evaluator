@@ -26,6 +26,8 @@ def find_best_ml_model(X, y, cv_folds=6):
     if X.shape[1] == 1:
         models['Polynomial (degree 2)'] = make_pipeline(PolynomialFeatures(degree=2), LinearRegression())
         models['Polynomial (degree 3)'] = make_pipeline(PolynomialFeatures(degree=3), LinearRegression())
+        models['Polynomial (degree 4)'] = make_pipeline(PolynomialFeatures(degree=4), LinearRegression())
+        models['Polynomial (degree 5)'] = make_pipeline(PolynomialFeatures(degree=5), LinearRegression())
 
     param_grids = {
         'Linear Regression': {},
@@ -69,6 +71,8 @@ def find_best_ml_model(X, y, cv_folds=6):
     if X.shape[1] == 1:
         param_grids['Polynomial (degree 2)'] = {}
         param_grids['Polynomial (degree 3)'] = {}
+        param_grids['Polynomial (degree 4)'] = {}
+        param_grids['Polynomial (degree 5)'] = {}
         
     best_model_info = {}
     best_model_object = None
