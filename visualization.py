@@ -11,6 +11,7 @@ from sklearn.preprocessing import PolynomialFeatures, StandardScaler
 from sklearn.inspection import permutation_importance
 from sklearn.feature_selection import RFE
 from sklearn.svm import SVR
+from statsmodels.nonparametric.smoothers_lowess import lowess
 
 def plot_model_bars(sorted_models):
     top_models = sorted_models[:5]
@@ -46,25 +47,41 @@ def check_residual_distribution(residuals, best_model_name):
     plt.savefig(temp_file_residuals.name)
     plt.close()
     return temp_file_residuals.name, p_value_text
-
+    
 def plot_all_variables_scatter(data, independent_vars, dependent_var):
     scaler = StandardScaler()
     scaled_data = scaler.fit_transform(data)
     scaled_df = pd.DataFrame(scaled_data, columns=data.columns)
+    
     plt.figure(figsize=(12, 8), dpi=400)
     colors = sns.color_palette("husl", n_colors=len(independent_vars))
+    
+    # Combine all independent variables for the black line
+    all_data = np.concatenate([scaled_df[var].values.reshape(-1, 1) for var in independent_vars])
+    all_dependent = np.tile(scaled_df[dependent_var].values, len(independent_vars))
+    
+    # Plot black line for all variables combined
+    lowess_result_all = lowess(all_dependent, all_data.flatten(), frac=0.6)
+    plt.plot(lowess_result_all[:, 0], lowess_result_all[:, 1], color='black', linewidth=3, label='All Variables')
+    
     for i, var in enumerate(independent_vars):
         plt.scatter(scaled_df[var], scaled_df[dependent_var],
                     color=colors[i], label=var, alpha=0.6)
-
+        
+        # Add colored LOESS line for each variable
+        lowess_result = lowess(scaled_df[dependent_var], scaled_df[var], frac=0.6)
+        plt.plot(lowess_result[:, 0], lowess_result[:, 1], color=colors[i], linewidth=1)
+    
     plt.xlabel('Scaled Independent Variables')
     plt.ylabel(f'Scaled {dependent_var}')
-    plt.title(f'All Variables vs {dependent_var} (Scaled)')
+    plt.title(f'All Variables vs {dependent_var} (Scaled) with LOESS')
     plt.legend(loc='lower right')
     plt.tight_layout()
+    
     temp_file = tempfile.NamedTemporaryFile(delete=False, suffix=".png")
     plt.savefig(temp_file.name, bbox_inches='tight')
     plt.close()
+    
     return temp_file.name
 
 
